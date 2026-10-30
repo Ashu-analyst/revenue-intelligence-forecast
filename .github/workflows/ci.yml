@@ -1,0 +1,19 @@
+name: ci
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements.txt
+      - name: Tests
+        run: |
+          pytest -q | tee pytest.txt
+          echo "## Tests" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY; tail -1 pytest.txt >> $GITHUB_STEP_SUMMARY; echo '```' >> $GITHUB_STEP_SUMMARY
+      - name: Build report
+        run: |
+          python -W ignore -m src.report > /dev/null
+          cat reports/report.md | grep -v '!\[' >> $GITHUB_STEP_SUMMARY
